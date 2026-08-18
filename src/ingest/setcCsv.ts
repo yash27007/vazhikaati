@@ -114,7 +114,13 @@ export async function ingestSetcCsv(
 
       const fromStopId = slugifyStopName(fromName);
       const toStopId = slugifyStopName(toName);
-      const routeId = `${depot}-${row['Route No.'].trim()}`;
+      // Depot + Route No. alone is not unique: the real SETC CSV has
+      // reverse-direction pairs sharing both (e.g. CB/468TU CHENNAI->OOTY
+      // and CB/468TU OOTY->CHENNAI). Folding from/to stop ids into the
+      // route id keeps each direction distinct instead of the second
+      // direction's trips/stopTimes silently colliding on primary key and
+      // being dropped by onConflictDoNothing.
+      const routeId = `${depot}-${row['Route No.'].trim()}-${fromStopId}-${toStopId}`;
       await db
         .insert(routes)
         .values({
