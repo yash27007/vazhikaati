@@ -48,3 +48,4 @@ skills-lock.json
 
 docs/
 *.csv
+!src/ingest/fixtures/*.csv
