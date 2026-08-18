@@ -23,3 +23,14 @@ export function setupTestDb() {
   });
   return createDb(url);
 }
+
+export async function truncateAll(db: ReturnType<typeof createDb>) {
+  const { sql } = await import('drizzle-orm');
+  await db.execute(sql`
+    TRUNCATE TABLE
+      trip_reliability, trip_observations, vehicle_positions,
+      stop_times, transfers, trips, calendar_exceptions, calendars,
+      routes, stops, agencies
+    RESTART IDENTITY CASCADE
+  `);
+}
