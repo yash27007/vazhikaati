@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     return Response.json({ error: 'No audio file was provided.' }, { status: 400 });
   }
 
-  if (process.env.MOCK_LLM === 'true') {
+  if (process.env.MOCK_LLM === 'true' && process.env.NODE_ENV !== 'production') {
     await new Promise((resolve) => setTimeout(resolve, 500));
     return Response.json({ text: MOCK_TRANSCRIPT, language: languageOverride ?? 'en' });
   }
