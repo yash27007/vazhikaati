@@ -67,4 +67,37 @@ describe('POST /api/chat (mock mode)', () => {
     const text = await response.text();
     expect(text.toLowerCase()).toContain('mock_llm');
   });
+
+  // Regression test: looksLikeDemoQuery() used to scan the ENTIRE prompt
+  // history (via JSON.stringify(prompt)), not just the latest user turn. So
+  // once a recognized Ooty->Srivilliputhur query appeared anywhere in a
+  // conversation, every later message in that same conversation — even an
+  // unrelated follow-up — kept matching, because the earlier turn was still
+  // sitting in the accumulated history. This sends a full 3-message
+  // conversation (recognized query, assistant reply, unrelated follow-up) in
+  // a single request, the way an existing conversation's history would
+  // arrive on its next turn, and checks the follow-up gets the fallback
+  // reply rather than re-triggering the demo plan-card tool-call.
+  test('an unrelated follow-up in an existing conversation gets the fallback, not a re-triggered demo plan', async () => {
+    const request = new Request('http://localhost/api/chat', {
+      method: 'POST',
+      body: JSON.stringify({
+        messages: [
+          { id: '1', role: 'user', parts: [{ type: 'text', text: 'How do I get from Ooty to Srivilliputhur?' }] },
+          {
+            id: '2',
+            role: 'assistant',
+            parts: [{ type: 'text', text: 'Here is the demo journey plan (MOCK_LLM mode — no real model was called).' }],
+          },
+          { id: '3', role: 'user', parts: [{ type: 'text', text: "what's the weather like?" }] },
+        ],
+      }),
+    });
+
+    const response = await POST(request);
+    expect(response.status).toBe(200);
+    const text = await response.text();
+    expect(text.toLowerCase()).toContain('mock_llm');
+    expect(text).not.toContain('OOTY_MTP_A');
+  });
 });

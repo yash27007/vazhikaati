@@ -1,5 +1,6 @@
 import { ToolLoopAgent } from 'ai';
 import { MockLanguageModelV4, simulateReadableStream } from 'ai/test';
+import type { LanguageModelV4Prompt } from '@ai-sdk/provider';
 import type { createDb } from '../../../db/client';
 import { createJourneyTools } from '../../../llm/tools';
 
@@ -7,6 +8,29 @@ import { createJourneyTools } from '../../../llm/tools';
 // example (OOTY_MTP_A -> MTP_TPR_A -> TPR_MDU_LAST -> MDU_SVP_LAST) — the
 // same fixture datetime used throughout src/engine/search.test.ts.
 const DEMO_DEPART_AFTER = '2026-08-16T15:00:00';
+
+// The `prompt` doStream() receives is the FULL conversation history
+// (LanguageModelV4Prompt = Array<LanguageModelV4Message>, each message
+// { role: 'system' | 'user' | 'assistant' | 'tool', content: [...] } — see
+// node_modules/@ai-sdk/provider/dist/index.d.ts), not just the newest turn.
+// Scanning the whole thing for "ooty"/"srivilliputhur" means once a
+// recognized query appears anywhere in a conversation, every later message
+// in that same conversation would also match, even an unrelated follow-up
+// like "what's the weather like?" — because the earlier turns are still
+// sitting in the accumulated history. So we pull out only the latest
+// `role: 'user'` message's text content and test that in isolation.
+function latestUserMessageText(prompt: LanguageModelV4Prompt): string {
+  for (let i = prompt.length - 1; i >= 0; i -= 1) {
+    const message = prompt[i];
+    if (message.role === 'user') {
+      return message.content
+        .filter((part) => part.type === 'text')
+        .map((part) => part.text)
+        .join(' ');
+    }
+  }
+  return '';
+}
 
 function looksLikeDemoQuery(promptText: string): boolean {
   const lower = promptText.toLowerCase();
@@ -35,7 +59,7 @@ export function createMockJourneyAgent(db: ReturnType<typeof createDb>) {
     modelId: 'mock-journey-model',
     doStream: async ({ prompt }) => {
       step += 1;
-      const promptText = JSON.stringify(prompt);
+      const promptText = latestUserMessageText(prompt);
 
       if (step === 1 && looksLikeDemoQuery(promptText)) {
         return {
