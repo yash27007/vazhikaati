@@ -34,6 +34,16 @@ describe('earliestArrival', () => {
     expect(result.legs.map((l) => l.tripId)).toEqual(['T1', 'T2']);
   });
 
+  test('uses a transfer edge at the origin (before any bus leg) to reach the network', () => {
+    // The origin stand only has a transfer edge out — no direct departures —
+    // so the very first hop taken must be a transfer, at legs === 0.
+    const connections = [conn({ tripId: 'T1', fromStopId: 'B_NEW', toStopId: 'C', departureAbsMin: 165, arrivalAbsMin: 200 })];
+    const transferEdges: TransferEdge[] = [{ fromStopId: 'B_OLD', toStopId: 'B_NEW', minTransferMinutes: 10 }];
+    const result = earliestArrival(connections, transferEdges, 'B_OLD', 'C', 90, 4, 5);
+    expect(result.found).toBe(true);
+    expect(result.legs.map((l) => l.tripId)).toEqual(['T1']);
+  });
+
   test('respects maxLegs', () => {
     const connections = [
       conn({ tripId: 'T1', fromStopId: 'A', toStopId: 'B', departureAbsMin: 100, arrivalAbsMin: 150 }),

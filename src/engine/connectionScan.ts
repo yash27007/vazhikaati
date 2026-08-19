@@ -54,11 +54,12 @@ export function earliestArrival(
     for (const c of byFromStop.get(stopId) ?? []) {
       if (c.departureAbsMin >= time + sameStopBuffer) options.push(c);
     }
-    if (legs > 0) {
-      for (const t of transfersFrom.get(stopId) ?? []) {
-        for (const c of byFromStop.get(t.toStopId) ?? []) {
-          if (c.departureAbsMin >= time + t.minTransferMinutes) options.push(c);
-        }
+    // Transfer edges are allowed at leg 0 too: an origin-stand walk to a
+    // different stand (e.g. Tirupur Old -> New) isn't a bus leg, so it
+    // shouldn't be gated by "have we taken a bus yet".
+    for (const t of transfersFrom.get(stopId) ?? []) {
+      for (const c of byFromStop.get(t.toStopId) ?? []) {
+        if (c.departureAbsMin >= time + t.minTransferMinutes) options.push(c);
       }
     }
     return options;

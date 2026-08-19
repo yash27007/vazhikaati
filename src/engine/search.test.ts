@@ -22,7 +22,7 @@ describe('planJourney', () => {
     expect(result.legs.map((l) => l.tripId)).toEqual(['OOTY_MTP_A', 'MTP_TPR_A', 'TPR_MDU_LAST', 'MDU_SVP_LAST']);
   });
 
-  test('scores the Tirupur transfer safe and the Madurai transfer tight', async () => {
+  test('scores the Tirupur transfer tight (tier-3 capped) and the Madurai transfer tight', async () => {
     const result = await planJourney(db, {
       origin: 'OOTY_STAND',
       destination: 'SRIVILLIPUTHUR_STAND',
@@ -31,9 +31,26 @@ describe('planJourney', () => {
 
     const tirupurLeg = result.legs.find((l) => l.tripId === 'TPR_MDU_LAST')!;
     const maduraiLeg = result.legs.find((l) => l.tripId === 'MDU_SVP_LAST')!;
-    expect(tirupurLeg.confidence).toBe('safe');
+    // The demo corridor is entirely tier-3 (synthetic) data, so a band that
+    // would otherwise compute as "safe" is capped at "tight" per scoreConfidence.
+    expect(tirupurLeg.confidence).toBe('tight');
     expect(maduraiLeg.confidence).toBe('tight');
     expect(result.overallConfidence).toBe('tight');
+  });
+
+  test('can use a transfer edge at the search origin, before any bus leg', async () => {
+    // TIRUPUR_OLD_STAND has no direct departures of its own in the demo
+    // corridor — the only way onward from it is the transfer to
+    // TIRUPUR_NEW_STAND, which must be usable as leg 0.
+    const result = await planJourney(db, {
+      origin: 'TIRUPUR_OLD_STAND',
+      destination: 'MADURAI_STAND',
+      departAfter: '2026-08-16T18:00:00Z',
+      maxLegs: 1,
+    });
+
+    expect(result.found).toBe(true);
+    expect(result.legs.map((l) => l.tripId)).toEqual(['TPR_MDU_LAST']);
   });
 
   test('reports not found for an unreachable destination within maxLegs', async () => {
