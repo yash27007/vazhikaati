@@ -42,6 +42,15 @@ describe('IST time helpers', () => {
     expect(new Date(ms).toISOString()).toBe('2026-08-16T15:40:00.000Z');
   });
 
+  test('parseIstDateTime respects a colonless explicit offset instead of double-appending IST', () => {
+    // Without the widened offset regex, '+0530' (no colon) was treated as
+    // offset-less, IST got appended again, and the result was unparseable
+    // ('...+0530+05:30' -> NaN) instead of respecting the given offset.
+    const ms = parseIstDateTime('2026-08-16T15:40:00+0530');
+    expect(Number.isNaN(ms)).toBe(false);
+    expect(new Date(ms).toISOString()).toBe('2026-08-16T10:10:00.000Z');
+  });
+
   test('istCalendarDate reports the IST calendar day, not the UTC day, for an early-morning instant', () => {
     // 2026-08-15T23:00:00Z is 2026-08-16T04:30:00 IST — an early-morning IST
     // departure that falls on the *previous* UTC calendar day.

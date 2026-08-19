@@ -41,7 +41,7 @@ export async function resolveStopId(db: ReturnType<typeof createDb>, query: stri
 export const IST_OFFSET_MINUTES = 330;
 
 function hasExplicitOffset(isoDateTime: string): boolean {
-  return /(Z|[+-]\d{2}:\d{2})$/.test(isoDateTime.trim());
+  return /(Z|[+-]\d{2}:?\d{2})$/.test(isoDateTime.trim());
 }
 
 /**

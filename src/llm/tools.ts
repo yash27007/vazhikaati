@@ -3,13 +3,20 @@ import { tool } from 'ai';
 import type { createDb } from '../db/client';
 import { planJourney } from '../engine/search';
 import { findLastSafeDeparture } from '../engine/lastSafeDeparture';
-import { StopNotFoundError } from '../engine/shared';
+import { StopNotFoundError, parseIstDateTime } from '../engine/shared';
 import type { JourneyPlanResult } from '../engine/types';
 import type { LastSafeDepartureResult } from '../engine/lastSafeDeparture';
 
-const isoDateTimeString = z
+// Validate with the same parser the engine actually uses (parseIstDateTime),
+// not Date.parse — they disagree on a date-only string like '2026-08-16':
+// Date.parse succeeds, but parseIstDateTime appends '+05:30' to it and
+// returns NaN. Validating with Date.parse would let such a value through
+// here only to fail downstream with a RangeError.
+// Exported for tests: confirms the validator agrees with the engine's own
+// parser (see the finding this refinement fixes, above).
+export const isoDateTimeString = z
   .string()
-  .refine((value) => !Number.isNaN(Date.parse(value)), {
+  .refine((value) => !Number.isNaN(parseIstDateTime(value)), {
     message: 'must be a parseable ISO 8601 datetime string',
   });
 
