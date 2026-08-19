@@ -46,6 +46,5 @@ next-env.d.ts
 .claude
 skills-lock.json
 
-docs/
 *.csv
 !src/ingest/fixtures/*.csv
