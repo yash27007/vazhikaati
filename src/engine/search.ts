@@ -2,7 +2,9 @@ import type { createDb } from '../db/client';
 import { loadConnections } from './loadConnections';
 import { earliestArrival } from './connectionScan';
 import { scoreConfidence, getReliability } from './confidence';
-import { resolveStopId, dateRangeFrom, worstBand, parseIstDateTime } from './shared';
+import { inArray } from 'drizzle-orm';
+import { stops } from '../db/schema';
+import { resolveStopId, dateRangeFrom, worstBand, parseIstDateTime, formatIstTime } from './shared';
 import type { Connection, TransferEdge, JourneyLeg, JourneyPlanResult } from './types';
 
 export interface PlanJourneyInput {
@@ -47,6 +49,17 @@ export async function buildLegsWithConfidence(
 ): Promise<JourneyLeg[]> {
   const legs: JourneyLeg[] = [];
 
+  const stopIds = new Set<string>();
+  for (const leg of scanLegs) {
+    stopIds.add(leg.fromStopId);
+    stopIds.add(leg.toStopId);
+  }
+  const stopRows =
+    stopIds.size > 0
+      ? await db.select({ stopId: stops.stopId, name: stops.name }).from(stops).where(inArray(stops.stopId, [...stopIds]))
+      : [];
+  const stopNameById = new Map(stopRows.map((s) => [s.stopId, s.name]));
+
   for (let i = 0; i < scanLegs.length; i++) {
     const leg = scanLegs[i];
     const previous = i > 0 ? scanLegs[i - 1] : null;
@@ -79,8 +92,12 @@ export async function buildLegsWithConfidence(
       routeId: leg.routeId,
       fromStopId: leg.fromStopId,
       toStopId: leg.toStopId,
+      fromStopName: stopNameById.get(leg.fromStopId) ?? leg.fromStopId,
+      toStopName: stopNameById.get(leg.toStopId) ?? leg.toStopId,
       departureAbsMin: leg.departureAbsMin,
       arrivalAbsMin: leg.arrivalAbsMin,
+      departureLocal: formatIstTime(leg.departureAbsMin),
+      arrivalLocal: formatIstTime(leg.arrivalAbsMin),
       dataTier: leg.dataTier,
       confidence: band,
       confidenceReasons: reasons,

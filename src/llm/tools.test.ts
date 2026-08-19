@@ -31,6 +31,8 @@ describe('journey tools', () => {
     expect(output.plan.legs.map((l) => l.tripId)).toEqual(['OOTY_MTP_A', 'MTP_TPR_A', 'TPR_MDU_LAST', 'MDU_SVP_LAST']);
     expect(typeof output.narration).toBe('string');
     expect(output.narration.length).toBeGreaterThan(0);
+    expect(output.narration).toContain('Ooty Bus Stand');
+    expect(output.narration).toContain('15:40');
   });
 
   test('find_last_safe_departure returns the safe plan and a break explanation', async () => {
@@ -42,6 +44,7 @@ describe('journey tools', () => {
     expect(output.plan.found).toBe(true);
     expect(output.plan.breakExplanation).toContain('TIRUPUR_NEW_STAND');
     expect(output.narration).toContain('OOTY_MTP_A');
+    expect(output.narration).toContain('Ooty Bus Stand');
   });
 
   test('an unknown stop name returns a no-data response instead of throwing', async () => {

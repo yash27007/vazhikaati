@@ -66,13 +66,15 @@ export function createJourneyTools(db: ReturnType<typeof createDb>) {
 
 function narratePlan(plan: JourneyPlanResult): string {
   if (!plan.found) return 'No route was found in the schedule for that request.';
-  const steps = plan.legs.map((l) => `${l.tripId} from ${l.fromStopId} to ${l.toStopId}`).join(', then ');
+  const steps = plan.legs
+    .map((l) => `${l.tripId} from ${l.fromStopName} (${l.departureLocal}) to ${l.toStopName} (${l.arrivalLocal})`)
+    .join(', then ');
   return `Take: ${steps}. Overall confidence: ${plan.overallConfidence}.`;
 }
 
 function narrateLastSafeDeparture(plan: LastSafeDepartureResult): string {
   if (!plan.found) return 'No journey in the schedule reaches the destination by that time.';
   const first = plan.legs[0];
-  const base = `Last safe departure is ${first.tripId} from ${first.fromStopId}.`;
+  const base = `Last safe departure is ${first.tripId} from ${first.fromStopName} at ${first.departureLocal}.`;
   return plan.breakExplanation ? `${base} ${plan.breakExplanation}` : base;
 }

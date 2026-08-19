@@ -22,8 +22,12 @@ export interface JourneyLeg {
   routeId: string;
   fromStopId: string;
   toStopId: string;
+  fromStopName: string;
+  toStopName: string;
   departureAbsMin: number;
   arrivalAbsMin: number;
+  departureLocal: string;
+  arrivalLocal: string;
   dataTier: number;
   confidence: ConfidenceBand;
   confidenceReasons: string[];

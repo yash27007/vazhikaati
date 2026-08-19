@@ -63,4 +63,18 @@ describe('planJourney', () => {
     expect(result.found).toBe(false);
     expect(result.overallConfidence).toBeNull();
   });
+
+  test('legs carry human-readable stop names and IST local times', async () => {
+    const result = await planJourney(db, {
+      origin: 'OOTY_STAND',
+      destination: 'SRIVILLIPUTHUR_STAND',
+      departAfter: '2026-08-16T15:00:00',
+    });
+
+    const firstLeg = result.legs[0];
+    expect(firstLeg.fromStopName).toBe('Ooty Bus Stand');
+    expect(firstLeg.toStopName).toBe('Mettupalayam Bus Stand');
+    expect(firstLeg.departureLocal).toBe('15:40');
+    expect(firstLeg.arrivalLocal).toBe('17:10');
+  });
 });
