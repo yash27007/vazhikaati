@@ -31,7 +31,7 @@ describe('findLastSafeDeparture', () => {
     });
 
     expect(result.breakExplanation).toBeTruthy();
-    expect(result.breakExplanation).toContain('TIRUPUR_NEW_STAND');
+    expect(result.breakExplanation).toContain('Tirupur New Bus Stand');
   });
 
   test('reports not found when no chain can meet the deadline', async () => {

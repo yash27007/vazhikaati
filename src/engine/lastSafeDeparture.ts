@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import type { createDb } from '../db/client';
 import { stops } from '../db/schema';
 import { loadConnections } from './loadConnections';
@@ -183,6 +183,24 @@ async function explainWhyLaterDeparturesFail(
     .sort((a, b) => a.departureAbsMin - b.departureAbsMin)[0];
   if (!nextDeparture) return null;
 
+  // Resolve human-readable stop names the same way buildLegsWithConfidence
+  // does (a single batched query), so this explanation reads "Tirupur New
+  // Bus Stand" instead of the raw internal ID "TIRUPUR_NEW_STAND". Every
+  // stop ID this function ever references (currentStopId, requiredLeg.fromStopId)
+  // is one of safeLegs' own fromStopId/toStopId, so collecting from safeLegs
+  // covers the whole function.
+  const stopIds = new Set<string>();
+  for (const leg of safeLegs) {
+    stopIds.add(leg.fromStopId);
+    stopIds.add(leg.toStopId);
+  }
+  const stopRows =
+    stopIds.size > 0
+      ? await db.select({ stopId: stops.stopId, name: stops.name }).from(stops).where(inArray(stops.stopId, [...stopIds]))
+      : [];
+  const stopNameById = new Map(stopRows.map((s) => [s.stopId, s.name]));
+  const stopName = (stopId: string) => stopNameById.get(stopId) ?? stopId;
+
   let arrivalAtCurrentStop = nextDeparture.arrivalAbsMin;
   let currentStopId = nextDeparture.toStopId;
 
@@ -208,7 +226,7 @@ async function explainWhyLaterDeparturesFail(
       const nextText = nextOnCorridor
         ? `the next connection from there doesn't depart until ${formatIstDateTime(nextOnCorridor.departureAbsMin)}`
         : 'no further connection was found in the search window';
-      return `Leaving after ${formatIstDateTime(firstLeg.departureAbsMin)} instead: you would reach ${currentStopId} at ${formatIstDateTime(arrivalAtCurrentStop)}, too late for the ${formatIstDateTime(requiredLeg.departureAbsMin)} connection from ${requiredLeg.fromStopId} — ${nextText}.`;
+      return `Leaving after ${formatIstDateTime(firstLeg.departureAbsMin)} instead: you would reach ${stopName(currentStopId)} at ${formatIstDateTime(arrivalAtCurrentStop)}, too late for the ${formatIstDateTime(requiredLeg.departureAbsMin)} connection from ${stopName(requiredLeg.fromStopId)} — ${nextText}.`;
     }
 
     arrivalAtCurrentStop = nextOnCorridor!.arrivalAbsMin;
