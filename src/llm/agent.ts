@@ -15,7 +15,7 @@ function requireOpenAiKey(): void {
     throw new Error(
       'OPENAI_API_KEY is not set. The journey engine and tools work without it (see src/engine ' +
         'and src/llm/tools.ts), but the conversational agent needs a key before it can run — set ' +
-        'OPENAI_API_KEY in .env.local to enable it.',
+        'OPENAI_API_KEY in .env to enable it.',
     );
   }
 }

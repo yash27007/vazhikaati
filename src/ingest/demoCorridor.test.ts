@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach } from 'bun:test';
 import { eq } from 'drizzle-orm';
 import { setupTestDb, truncateAll } from '../db/testDb';
-import { stops, trips, stopTimes, transfers } from '../db/schema';
+import { stops, stopTimes, transfers } from '../db/schema';
 import { ingestDemoCorridor } from './demoCorridor';
 
 describe('ingestDemoCorridor', () => {

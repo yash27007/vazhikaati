@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeAll, beforeEach } from 'bun:test';
+import { describe, test, expect, beforeEach } from 'bun:test';
 import { setupTestDb, truncateAll } from '../testDb';
 import { agencies, stops, routes, calendars, trips, stopTimes } from './index';
 
