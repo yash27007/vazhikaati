@@ -100,6 +100,12 @@ export async function findLastSafeDeparture(
   const dates = dateRangeFrom(input.arriveBy, -(input.horizonDays ?? 3));
 
   const { connections, transferEdges } = await loadConnections(db, dates);
+  // Exclusion is by bare tripId, not (tripId, date): on this project's
+  // uniform daily-repeating demo calendar every occurrence of a trip behaves
+  // identically, so this is harmless. Against a calendar with day-of-week
+  // variation or exceptions, excluding a trip for one unsafe occurrence would
+  // also remove its other, unrelated occurrences from the search window —
+  // revisit if/when a non-uniform real corridor exercises this path.
   const excludedTripIds = new Set<string>();
 
   for (let attempt = 0; attempt < MAX_SAFETY_RETRIES; attempt++) {
@@ -147,6 +153,14 @@ export async function findLastSafeDeparture(
     };
   }
 
+  // Retry exhaustion (10 candidates all struck unsafe) is indistinguishable
+  // here from "no chain reaches the destination by the deadline at all" —
+  // both return found:false with no explanation. On this project's small
+  // demo corridor that's never been observed; a real corridor with many
+  // routes could in principle need more than MAX_SAFETY_RETRIES exclusions
+  // to converge on a genuinely safe chain, in which case this would
+  // under-report rather than correctly say "search gave up." Revisit if a
+  // real-data test ever exercises this branch.
   return { found: false, legs: [], overallConfidence: null, breakExplanation: null };
 }
 
