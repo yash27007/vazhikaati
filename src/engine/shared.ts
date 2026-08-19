@@ -22,6 +22,18 @@ export async function resolveStopId(db: ReturnType<typeof createDb>, query: stri
   const byName = await db.select().from(stops).where(ilike(stops.name, normalized)).limit(1);
   if (byName.length > 0) return byName[0].stopId;
 
+  // Fallback: substring match against the stored name, so a plain town/stop
+  // name like "Ooty" resolves to "Ooty Bus Stand". When multiple stops
+  // match, pick deterministically: shortest name first (most specific
+  // match), then alphabetically.
+  const bySubstring = await db.select().from(stops).where(ilike(stops.name, `%${normalized}%`));
+  if (bySubstring.length > 0) {
+    const [best] = bySubstring.sort(
+      (a, b) => a.name.length - b.name.length || a.name.localeCompare(b.name),
+    );
+    return best.stopId;
+  }
+
   throw new StopNotFoundError(query);
 }
 
