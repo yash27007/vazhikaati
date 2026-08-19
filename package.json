@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.42",
+    "@ai-sdk/react": "^4.0.71",
     "ai": "^7.0.66",
     "csv-parse": "7.0.2",
     "dotenv": "^17.4.2",
