@@ -1,5 +1,11 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Data source
+
+Seed timetable data (`SETCbustimings_1_0.csv`) is not committed to this repo — it's ignored on purpose. Fetch it from the Tamil Nadu open government data portal:
+
+**[tn.data.gov.in](https://tn.data.gov.in/)** — search for "SETC bus timings" (or the equivalent current SETC/TNSTC timetable dataset) and download the CSV into the project root before running ingestion. If the dataset's filename or shape changes upstream, re-check it against `src/ingest/setc-csv.ts` before re-running the importer.
+
 ## Getting Started
 
 First, run the development server:
