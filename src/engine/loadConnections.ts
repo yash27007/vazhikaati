@@ -30,7 +30,9 @@ function isServiceActiveOn(
 }
 
 function absoluteMinutes(dateStr: string, minutesPastMidnight: number): number {
-  return Date.parse(`${dateStr}T00:00:00Z`) / 60000 + minutesPastMidnight;
+  // IST (UTC+5:30) midnight of dateStr — see shared.ts for why this project
+  // anchors every wall-clock time to IST, not UTC.
+  return Date.parse(`${dateStr}T00:00:00+05:30`) / 60000 + minutesPastMidnight;
 }
 
 /**

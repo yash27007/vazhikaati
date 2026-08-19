@@ -2,7 +2,7 @@ import type { createDb } from '../db/client';
 import { loadConnections } from './loadConnections';
 import { earliestArrival } from './connectionScan';
 import { scoreConfidence, getReliability } from './confidence';
-import { resolveStopId, dateRangeFrom, worstBand } from './shared';
+import { resolveStopId, dateRangeFrom, worstBand, parseIstDateTime } from './shared';
 import type { Connection, TransferEdge, JourneyLeg, JourneyPlanResult } from './types';
 
 export interface PlanJourneyInput {
@@ -19,7 +19,7 @@ export async function planJourney(
 ): Promise<JourneyPlanResult> {
   const originStopId = await resolveStopId(db, input.origin);
   const destinationStopId = await resolveStopId(db, input.destination);
-  const startAbsMin = Date.parse(input.departAfter) / 60000;
+  const startAbsMin = parseIstDateTime(input.departAfter) / 60000;
   const dates = dateRangeFrom(input.departAfter, input.horizonDays ?? 3);
 
   const { connections, transferEdges } = await loadConnections(db, dates);

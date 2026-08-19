@@ -4,7 +4,7 @@ import { stops } from '../db/schema';
 import { loadConnections } from './loadConnections';
 import { earliestArrival } from './connectionScan';
 import { buildLegsWithConfidence } from './search';
-import { resolveStopId, dateRangeFrom, worstBand } from './shared';
+import { resolveStopId, dateRangeFrom, worstBand, parseIstDateTime, formatIstDateTime } from './shared';
 import type { Connection, TransferEdge, JourneyLeg, ConfidenceBand } from './types';
 
 export interface FindLastSafeDepartureInput {
@@ -96,7 +96,7 @@ export async function findLastSafeDeparture(
 ): Promise<LastSafeDepartureResult> {
   const originStopId = await resolveStopId(db, input.origin);
   const destinationStopId = await resolveStopId(db, input.destination);
-  const deadlineAbsMin = Date.parse(input.arriveBy) / 60000;
+  const deadlineAbsMin = parseIstDateTime(input.arriveBy) / 60000;
   const dates = dateRangeFrom(input.arriveBy, -(input.horizonDays ?? 3));
 
   const { connections, transferEdges } = await loadConnections(db, dates);
@@ -206,9 +206,9 @@ async function explainWhyLaterDeparturesFail(
 
     if (strandedHere) {
       const nextText = nextOnCorridor
-        ? `the next connection from there doesn't depart until ${formatAbsMin(nextOnCorridor.departureAbsMin)}`
+        ? `the next connection from there doesn't depart until ${formatIstDateTime(nextOnCorridor.departureAbsMin)}`
         : 'no further connection was found in the search window';
-      return `Leaving after ${formatAbsMin(firstLeg.departureAbsMin)} instead: you would reach ${currentStopId} at ${formatAbsMin(arrivalAtCurrentStop)}, too late for the ${formatAbsMin(requiredLeg.departureAbsMin)} connection from ${requiredLeg.fromStopId} — ${nextText}.`;
+      return `Leaving after ${formatIstDateTime(firstLeg.departureAbsMin)} instead: you would reach ${currentStopId} at ${formatIstDateTime(arrivalAtCurrentStop)}, too late for the ${formatIstDateTime(requiredLeg.departureAbsMin)} connection from ${requiredLeg.fromStopId} — ${nextText}.`;
     }
 
     arrivalAtCurrentStop = nextOnCorridor!.arrivalAbsMin;
@@ -216,8 +216,4 @@ async function explainWhyLaterDeparturesFail(
   }
 
   return null;
-}
-
-function formatAbsMin(absMin: number): string {
-  return new Date(absMin * 60000).toISOString();
 }

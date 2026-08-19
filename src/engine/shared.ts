@@ -37,14 +37,53 @@ export async function resolveStopId(db: ReturnType<typeof createDb>, query: stri
   throw new StopNotFoundError(query);
 }
 
+/** Minutes to add to a UTC instant to get its IST (Asia/Kolkata, UTC+5:30) wall-clock reading. */
+export const IST_OFFSET_MINUTES = 330;
+
+function hasExplicitOffset(isoDateTime: string): boolean {
+  return /(Z|[+-]\d{2}:\d{2})$/.test(isoDateTime.trim());
+}
+
+/**
+ * Parses an ISO 8601 datetime as IST when it carries no explicit timezone
+ * offset. This project has one timezone that matters — it's an India bus
+ * ledger — so an unqualified caller-supplied time (`departAfter`, `arriveBy`)
+ * means IST, not whatever timezone the Node/Bun process happens to run in.
+ * A string with an explicit offset (`Z`, `+05:30`, etc.) is respected as-is.
+ * Returns the same thing `Date.parse` does: epoch milliseconds, or `NaN` for
+ * an unparseable string.
+ */
+export function parseIstDateTime(isoDateTime: string): number {
+  return Date.parse(hasExplicitOffset(isoDateTime) ? isoDateTime : `${isoDateTime}+05:30`);
+}
+
+/** Returns the `YYYY-MM-DD` IST calendar date an absolute-minute value falls on. */
+export function istCalendarDate(absMin: number): string {
+  return new Date((absMin + IST_OFFSET_MINUTES) * 60000).toISOString().slice(0, 10);
+}
+
+/** Renders an absolute-minute value as an `HH:MM` IST wall-clock time. */
+export function formatIstTime(absMin: number): string {
+  const ist = new Date((absMin + IST_OFFSET_MINUTES) * 60000);
+  const hh = String(ist.getUTCHours()).padStart(2, '0');
+  const mm = String(ist.getUTCMinutes()).padStart(2, '0');
+  return `${hh}:${mm}`;
+}
+
+/** Renders an absolute-minute value as `YYYY-MM-DD HH:MM IST`, for messages spanning multiple days. */
+export function formatIstDateTime(absMin: number): string {
+  return `${istCalendarDate(absMin)} ${formatIstTime(absMin)} IST`;
+}
+
 /**
  * Returns an inclusive array of YYYY-MM-DD date strings.
  * days > 0: from the reference date's day forward through +days.
  * days < 0: from -|days| before the reference date's day through the reference day itself.
  */
 export function dateRangeFrom(isoDateTime: string, days: number): string[] {
-  const start = new Date(isoDateTime);
-  const startDate = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
+  const instantMs = parseIstDateTime(isoDateTime);
+  const istInstant = new Date(instantMs + IST_OFFSET_MINUTES * 60000);
+  const startDate = new Date(Date.UTC(istInstant.getUTCFullYear(), istInstant.getUTCMonth(), istInstant.getUTCDate()));
   const lowerBound = days < 0 ? -Math.abs(days) : 0;
   const upperBound = days < 0 ? 0 : days;
   const dates: string[] = [];

@@ -15,7 +15,7 @@ describe('planJourney', () => {
     const result = await planJourney(db, {
       origin: 'OOTY_STAND',
       destination: 'SRIVILLIPUTHUR_STAND',
-      departAfter: '2026-08-16T15:00:00Z',
+      departAfter: '2026-08-16T15:00:00',
     });
 
     expect(result.found).toBe(true);
@@ -26,7 +26,7 @@ describe('planJourney', () => {
     const result = await planJourney(db, {
       origin: 'OOTY_STAND',
       destination: 'SRIVILLIPUTHUR_STAND',
-      departAfter: '2026-08-16T15:00:00Z',
+      departAfter: '2026-08-16T15:00:00',
     });
 
     const tirupurLeg = result.legs.find((l) => l.tripId === 'TPR_MDU_LAST')!;
@@ -45,7 +45,7 @@ describe('planJourney', () => {
     const result = await planJourney(db, {
       origin: 'TIRUPUR_OLD_STAND',
       destination: 'MADURAI_STAND',
-      departAfter: '2026-08-16T18:00:00Z',
+      departAfter: '2026-08-16T18:00:00',
       maxLegs: 1,
     });
 
@@ -57,7 +57,7 @@ describe('planJourney', () => {
     const result = await planJourney(db, {
       origin: 'OOTY_STAND',
       destination: 'SRIVILLIPUTHUR_STAND',
-      departAfter: '2026-08-16T15:00:00Z',
+      departAfter: '2026-08-16T15:00:00',
       maxLegs: 2,
     });
     expect(result.found).toBe(false);

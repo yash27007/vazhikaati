@@ -15,7 +15,7 @@ describe('findLastSafeDeparture', () => {
     const result = await findLastSafeDeparture(db, {
       origin: 'OOTY_STAND',
       destination: 'SRIVILLIPUTHUR_STAND',
-      arriveBy: '2026-08-17T08:00:00Z',
+      arriveBy: '2026-08-17T08:00:00',
     });
 
     expect(result.found).toBe(true);
@@ -27,7 +27,7 @@ describe('findLastSafeDeparture', () => {
     const result = await findLastSafeDeparture(db, {
       origin: 'OOTY_STAND',
       destination: 'SRIVILLIPUTHUR_STAND',
-      arriveBy: '2026-08-17T08:00:00Z',
+      arriveBy: '2026-08-17T08:00:00',
     });
 
     expect(result.breakExplanation).toBeTruthy();
@@ -48,7 +48,7 @@ describe('findLastSafeDeparture', () => {
     const result = await findLastSafeDeparture(db, {
       origin: 'OOTY_STAND',
       destination: 'SRIVILLIPUTHUR_STAND',
-      arriveBy: '2019-12-30T00:00:00Z', // before the calendar's 2020-01-01 startDate
+      arriveBy: '2019-12-30T00:00:00', // before the calendar's 2020-01-01 startDate
     });
     expect(result.found).toBe(false);
     expect(result.breakExplanation).toBeNull();

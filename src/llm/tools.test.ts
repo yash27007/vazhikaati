@@ -23,7 +23,7 @@ describe('journey tools', () => {
 
   test('plan_journey returns a structured plan and a narration, called directly as a function', async () => {
     const output = await tools.plan_journey.execute!(
-      { origin: 'OOTY_STAND', destination: 'SRIVILLIPUTHUR_STAND', departAfter: '2026-08-16T15:00:00Z', maxLegs: 4 },
+      { origin: 'OOTY_STAND', destination: 'SRIVILLIPUTHUR_STAND', departAfter: '2026-08-16T15:00:00', maxLegs: 4 },
       testToolCallContext,
     );
 
@@ -35,7 +35,7 @@ describe('journey tools', () => {
 
   test('find_last_safe_departure returns the safe plan and a break explanation', async () => {
     const output = await tools.find_last_safe_departure.execute!(
-      { origin: 'OOTY_STAND', destination: 'SRIVILLIPUTHUR_STAND', arriveBy: '2026-08-17T08:00:00Z', maxLegs: 4 },
+      { origin: 'OOTY_STAND', destination: 'SRIVILLIPUTHUR_STAND', arriveBy: '2026-08-17T08:00:00', maxLegs: 4 },
       testToolCallContext,
     );
 
