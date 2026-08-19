@@ -100,4 +100,35 @@ describe('POST /api/chat (mock mode)', () => {
     expect(text.toLowerCase()).toContain('mock_llm');
     expect(text).not.toContain('OOTY_MTP_A');
   });
+
+  // Real-mode failure path: with MOCK_LLM unset and OPENAI_API_KEY missing,
+  // createJourneyAgent's requireOpenAiKey() throws synchronously before any
+  // streaming starts. The route must catch that and return a structured
+  // error response, not an unhandled 500 or a silent hang.
+  test('missing OPENAI_API_KEY without MOCK_LLM returns a structured error, not a throw', async () => {
+    const previousMockLlm = process.env.MOCK_LLM;
+    const previousApiKey = process.env.OPENAI_API_KEY;
+    delete process.env.MOCK_LLM;
+    delete process.env.OPENAI_API_KEY;
+
+    try {
+      const request = new Request('http://localhost/api/chat', {
+        method: 'POST',
+        body: JSON.stringify({
+          messages: [{ id: '1', role: 'user', parts: [{ type: 'text', text: 'Hello' }] }],
+        }),
+      });
+
+      const response = await POST(request);
+      expect(response.status).toBe(500);
+      const body = await response.json();
+      expect(typeof body.error).toBe('string');
+      expect(body.error).toContain('OPENAI_API_KEY');
+    } finally {
+      if (previousMockLlm === undefined) delete process.env.MOCK_LLM;
+      else process.env.MOCK_LLM = previousMockLlm;
+      if (previousApiKey === undefined) delete process.env.OPENAI_API_KEY;
+      else process.env.OPENAI_API_KEY = previousApiKey;
+    }
+  });
 });
