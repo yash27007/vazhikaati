@@ -21,10 +21,16 @@ export function ChatInput({ disabled, onSend }: { disabled: boolean; onSend: (te
         event.preventDefault();
         submit();
       }}
-      className="flex items-end gap-2 border-t border-zinc-200 px-4 py-3 dark:border-zinc-800"
+      className="grid grid-cols-[auto_1fr_auto] items-end gap-x-2 gap-y-2.5 border-t border-line px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:grid-cols-[auto_auto_1fr_auto] sm:px-6"
     >
-      <MicButton language={language} onTranscribed={(transcribed) => setText(transcribed)} />
-      <LanguagePicker value={language} onChange={setLanguage} />
+      {/* Mobile stacks the composer into two rows with the mic running down
+          the left edge; from sm up everything sits on a single line. */}
+      <div className="col-start-1 row-span-2 row-start-1 self-end sm:row-span-1">
+        <MicButton language={language} onTranscribed={(transcribed) => setText(transcribed)} />
+      </div>
+      <div className="col-span-2 col-start-2 row-start-1 justify-self-start sm:col-span-1 sm:self-end">
+        <LanguagePicker value={language} onChange={setLanguage} />
+      </div>
       <textarea
         value={text}
         onChange={(event) => setText(event.target.value)}
@@ -36,12 +42,12 @@ export function ChatInput({ disabled, onSend }: { disabled: boolean; onSend: (te
         }}
         rows={1}
         placeholder="Ask about a journey…"
-        className="flex-1 resize-none rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+        className="col-start-2 row-start-2 max-h-40 min-h-11 w-full resize-none rounded-2xl border border-line bg-surface-raised px-3.5 py-2.5 text-[0.9375rem] leading-snug text-ink placeholder:text-ink-faint field-sizing-content sm:col-start-3 sm:row-start-1"
       />
       <button
         type="submit"
         disabled={disabled || !text.trim()}
-        className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+        className="col-start-3 row-start-2 h-11 rounded-2xl bg-accent px-4 text-[0.9375rem] font-medium text-accent-ink transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-40 sm:col-start-4 sm:row-start-1"
       >
         Send
       </button>

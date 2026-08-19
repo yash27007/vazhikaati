@@ -11,7 +11,7 @@ export function LanguagePicker({ value, onChange }: { value: string; onChange: (
     <select
       value={value}
       onChange={(event) => onChange(event.target.value)}
-      className="rounded-lg border border-zinc-300 bg-white px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-900"
+      className="h-8 rounded-full border border-line bg-surface-raised px-2.5 font-mono text-[0.6875rem] uppercase tracking-[0.08em] text-ink-muted transition-colors hover:border-line-strong sm:h-11"
       aria-label="Spoken language for voice input"
     >
       {LANGUAGES.map((lang) => (

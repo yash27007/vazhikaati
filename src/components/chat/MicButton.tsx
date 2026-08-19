@@ -86,20 +86,26 @@ export function MicButton({
   }
 
   return (
-    <div className="flex flex-col items-center gap-1">
+    <div className="flex flex-col items-center gap-1.5">
       <button
         type="button"
         onClick={recording ? stopRecording : startRecording}
         disabled={busy}
         aria-pressed={recording}
         aria-label={recording ? 'Stop recording' : 'Start voice input'}
-        className={`flex h-10 w-10 items-center justify-center rounded-full text-white ${
-          recording ? 'bg-red-600 animate-pulse' : 'bg-zinc-700 dark:bg-zinc-600'
-        } disabled:opacity-50`}
+        className={`flex h-11 w-11 items-center justify-center rounded-full text-lg transition-colors disabled:opacity-40 ${
+          recording
+            ? 'bg-band-broken text-surface-raised ring-4 ring-band-broken-bg animate-pulse'
+            : 'bg-accent-soft text-accent hover:bg-accent hover:text-accent-ink'
+        }`}
       >
         {busy ? '…' : '🎤'}
       </button>
-      {errorMessage && <span className="text-xs text-red-600">{errorMessage}</span>}
+      {errorMessage && (
+        <span role="alert" className="max-w-28 text-center text-[0.6875rem] leading-tight text-danger">
+          {errorMessage}
+        </span>
+      )}
     </div>
   );
 }

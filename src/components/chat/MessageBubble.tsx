@@ -6,16 +6,18 @@ export function MessageBubble({ message }: { message: UIMessage }) {
   const isUser = message.role === 'user';
 
   return (
-    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+    <div className={`vk-rise flex ${isUser ? 'justify-end' : 'justify-start'}`}>
       <div
-        className={`max-w-[85%] rounded-2xl px-4 py-2 ${
-          isUser ? 'bg-blue-600 text-white' : 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50'
-        }`}
+        className={
+          isUser
+            ? 'max-w-[85%] rounded-2xl rounded-br-md bg-accent px-4 py-2.5 text-accent-ink shadow-sm'
+            : 'max-w-[92%] rounded-2xl rounded-bl-md border border-line bg-surface-raised px-4 py-2.5 text-ink sm:max-w-[85%]'
+        }
       >
         {message.parts.map((part, index) => {
           if (part.type === 'text') {
             return (
-              <p key={index} className="whitespace-pre-wrap text-sm">
+              <p key={index} className="whitespace-pre-wrap text-[0.9375rem] leading-relaxed">
                 {part.text}
               </p>
             );
@@ -25,8 +27,8 @@ export function MessageBubble({ message }: { message: UIMessage }) {
           if (planOutput) {
             const { plan, narration } = planOutput;
             return (
-              <div key={index} className="flex flex-col gap-2">
-                <p className="whitespace-pre-wrap text-sm">{narration}</p>
+              <div key={index} className="flex flex-col gap-3">
+                <p className="whitespace-pre-wrap text-[0.9375rem] leading-relaxed">{narration}</p>
                 {plan && plan.found && <JourneyPlanCard plan={plan} />}
               </div>
             );
