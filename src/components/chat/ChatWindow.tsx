@@ -24,6 +24,11 @@ export function ChatWindow() {
     transport: new DefaultChatTransport({ api: '/api/chat' }),
   });
   const bottomRef = useRef<HTMLDivElement>(null);
+  // Guards the persistence effect from writing before hydration has run —
+  // without this, the persistence effect's first commit (messages === [])
+  // races the hydration effect and can momentarily overwrite stored history
+  // right before the real data lands.
+  const hydratedRef = useRef(false);
 
   // Hydrate from localStorage after mount only — reading it during the
   // initial render would make the client's first render diverge from the
@@ -31,12 +36,22 @@ export function ChatWindow() {
   useEffect(() => {
     const stored = loadStoredMessages();
     if (stored.length > 0) setMessages(stored);
+    hydratedRef.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
-  }, [messages]);
+    if (!hydratedRef.current) return;
+    // Skip mid-stream writes — persist once a turn settles rather than on
+    // every streamed token, which is both wasteful and unnecessary (a
+    // refresh mid-stream just loses the in-flight reply, same as today).
+    if (status === 'streaming') return;
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+    } catch (err) {
+      console.error('Failed to persist chat history to localStorage:', err);
+    }
+  }, [messages, status]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
