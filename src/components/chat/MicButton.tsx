@@ -25,6 +25,7 @@ export function MicButton({
   // `streamRef` fallback covers the case where unmount happens before the
   // recorder was ever created (still awaiting `getUserMedia`).
   useEffect(() => {
+    unmountedRef.current = false;
     return () => {
       unmountedRef.current = true;
       if (mediaRecorderRef.current?.state === 'recording') {
@@ -56,9 +57,12 @@ export function MicButton({
         streamRef.current = null;
         setBusy(true);
         try {
-          const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+          const mimeType = recorder.mimeType || 'audio/webm';
+          const subtype = mimeType.split('/')[1]?.split(';')[0];
+          const extension = subtype && subtype.length > 0 ? subtype : 'webm';
+          const blob = new Blob(chunksRef.current, { type: mimeType });
           const formData = new FormData();
-          formData.append('audio', blob, 'clip.webm');
+          formData.append('audio', blob, `clip.${extension}`);
           if (language) formData.append('language', language);
 
           const response = await fetch('/api/transcribe', { method: 'POST', body: formData });
