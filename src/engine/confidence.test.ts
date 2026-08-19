@@ -1,7 +1,6 @@
 import { describe, test, expect, beforeEach } from 'bun:test';
-import { eq } from 'drizzle-orm';
 import { setupTestDb, truncateAll } from '../db/testDb';
-import { agencies, stops, routes, calendars, trips, tripReliability } from '../db/schema';
+import { agencies, routes, calendars, trips, tripReliability } from '../db/schema';
 import { scoreConfidence, getReliability } from './confidence';
 
 describe('scoreConfidence', () => {
