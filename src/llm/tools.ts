@@ -7,6 +7,12 @@ import { StopNotFoundError } from '../engine/shared';
 import type { JourneyPlanResult } from '../engine/types';
 import type { LastSafeDepartureResult } from '../engine/lastSafeDeparture';
 
+const isoDateTimeString = z
+  .string()
+  .refine((value) => !Number.isNaN(Date.parse(value)), {
+    message: 'must be a parseable ISO 8601 datetime string',
+  });
+
 export function createJourneyTools(db: ReturnType<typeof createDb>) {
   return {
     plan_journey: tool({
@@ -14,7 +20,7 @@ export function createJourneyTools(db: ReturnType<typeof createDb>) {
       inputSchema: z.object({
         origin: z.string().describe('Origin stop name'),
         destination: z.string().describe('Destination stop name'),
-        departAfter: z.string().describe('ISO 8601 datetime — do not depart before this'),
+        departAfter: isoDateTimeString.describe('ISO 8601 datetime — do not depart before this'),
         maxLegs: z.number().int().min(1).max(6).default(4),
       }),
       execute: async ({ origin, destination, departAfter, maxLegs }) => {
@@ -25,6 +31,9 @@ export function createJourneyTools(db: ReturnType<typeof createDb>) {
           if (error instanceof StopNotFoundError) {
             return { plan: null, narration: `I don't have "${error.query}" in the ledger yet.` };
           }
+          if (error instanceof RangeError) {
+            return { plan: null, narration: `I couldn't parse "${departAfter}" as a datetime — please give an ISO 8601 datetime.` };
+          }
           throw error;
         }
       },
@@ -34,7 +43,7 @@ export function createJourneyTools(db: ReturnType<typeof createDb>) {
       inputSchema: z.object({
         origin: z.string(),
         destination: z.string(),
-        arriveBy: z.string().describe('ISO 8601 datetime — must arrive at or before this'),
+        arriveBy: isoDateTimeString.describe('ISO 8601 datetime — must arrive at or before this'),
         maxLegs: z.number().int().min(1).max(6).default(4),
       }),
       execute: async ({ origin, destination, arriveBy, maxLegs }) => {
@@ -44,6 +53,9 @@ export function createJourneyTools(db: ReturnType<typeof createDb>) {
         } catch (error) {
           if (error instanceof StopNotFoundError) {
             return { plan: null, narration: `I don't have "${error.query}" in the ledger yet.` };
+          }
+          if (error instanceof RangeError) {
+            return { plan: null, narration: `I couldn't parse "${arriveBy}" as a datetime — please give an ISO 8601 datetime.` };
           }
           throw error;
         }
