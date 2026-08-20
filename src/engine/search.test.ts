@@ -2,7 +2,7 @@ import { describe, test, expect, beforeEach } from 'bun:test';
 import { setupTestDb, truncateAll } from '../db/testDb';
 import { ingestDemoCorridor } from '../ingest/demoCorridor';
 import { agencies, calendars, stops, routes, trips, stopTimes } from '../db/schema';
-import { planJourney } from './search';
+import { planJourney, planJourneyOptions } from './search';
 
 describe('planJourney', () => {
   const db = setupTestDb();
@@ -83,6 +83,51 @@ describe('planJourney', () => {
     expect(result.found).toBe(true);
     expect(result.legs.map((l) => l.tripId)).toEqual(['MULTI_TRIP', 'MULTI_TRIP']);
     expect(result.legs[1].confidence).not.toBe('broken');
+  });
+
+  test('planJourneyOptions returns multiple distinct departures, earliest first', async () => {
+    // The demo corridor has 3 Ooty->Mettupalayam departures after 07:00:
+    // OOTY_MTP_EARLY (08:00), OOTY_MTP_A (15:40), OOTY_MTP_B (17:20).
+    const result = await planJourneyOptions(db, {
+      origin: 'OOTY_STAND',
+      destination: 'MADURAI_STAND',
+      departAfter: '2026-08-16T07:00:00',
+    });
+
+    expect(result.found).toBe(true);
+    expect(result.options.length).toBeGreaterThan(1);
+    expect(result.options[0].legs[0].tripId).toBe('OOTY_MTP_EARLY');
+    // Each option's first leg is a genuinely different departure.
+    const firstLegTripIds = result.options.map((o) => o.legs[0].tripId);
+    expect(new Set(firstLegTripIds).size).toBe(firstLegTripIds.length);
+    // Arrival times are non-decreasing across options (earliest-first is
+    // about the first option being earliest-possible, not that every later
+    // option arrives strictly later — but for this fixture they do).
+    for (let i = 1; i < result.options.length; i++) {
+      const prevArrival = result.options[i - 1].legs.at(-1)!.arrivalAbsMin;
+      const thisArrival = result.options[i].legs.at(-1)!.arrivalAbsMin;
+      expect(thisArrival).toBeGreaterThanOrEqual(prevArrival);
+    }
+  });
+
+  test('planJourneyOptions caps at maxOptions', async () => {
+    const result = await planJourneyOptions(
+      db,
+      { origin: 'OOTY_STAND', destination: 'MADURAI_STAND', departAfter: '2026-08-16T07:00:00' },
+      2,
+    );
+    expect(result.options.length).toBeLessThanOrEqual(2);
+  });
+
+  test('planJourneyOptions reports not found when no chain exists at all', async () => {
+    const result = await planJourneyOptions(db, {
+      origin: 'OOTY_STAND',
+      destination: 'SRIVILLIPUTHUR_STAND',
+      departAfter: '2026-08-16T15:00:00',
+      maxLegs: 2,
+    });
+    expect(result.found).toBe(false);
+    expect(result.options).toEqual([]);
   });
 
   test('reports not found for an unreachable destination within maxLegs', async () => {

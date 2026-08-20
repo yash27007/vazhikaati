@@ -35,6 +35,54 @@ export async function planJourney(
   return { found: true, legs, overallConfidence: worstBand(legs.map((l) => l.confidence)) };
 }
 
+const DEFAULT_MAX_OPTIONS = 3;
+
+/**
+ * Like planJourney, but returns up to maxOptions distinct journeys instead
+ * of just the single earliest-arriving one — a real traveller usually
+ * wants to compare a couple of choices, not be told there's exactly one
+ * right answer. Each option after the first is found by excluding the
+ * previous option's very first leg (forcing the search to pick a
+ * genuinely different departure), the same trip-exclusion retry pattern
+ * findLastSafeDeparture already uses. Options are returned earliest-first;
+ * fewer than maxOptions is normal once genuinely distinct departures run
+ * out, not an error.
+ */
+export async function planJourneyOptions(
+  db: ReturnType<typeof createDb>,
+  input: PlanJourneyInput,
+  maxOptions: number = DEFAULT_MAX_OPTIONS,
+): Promise<{ found: boolean; options: JourneyPlanResult[] }> {
+  const originStopId = await resolveStopId(db, input.origin);
+  const destinationStopId = await resolveStopId(db, input.destination);
+  const startAbsMin = parseIstDateTime(input.departAfter) / 60000;
+  const dates = dateRangeFrom(input.departAfter, input.horizonDays ?? 3);
+
+  const { connections, transferEdges } = await loadConnections(db, dates);
+  const excludedTripIds = new Set<string>();
+  const options: JourneyPlanResult[] = [];
+
+  for (let attempt = 0; attempt < maxOptions; attempt++) {
+    const candidateConnections = connections.filter((c) => !excludedTripIds.has(c.tripId));
+    const scan = earliestArrival(
+      candidateConnections,
+      transferEdges,
+      originStopId,
+      destinationStopId,
+      startAbsMin,
+      input.maxLegs ?? 4,
+      5,
+    );
+    if (!scan.found) break;
+
+    const legs = await buildLegsWithConfidence(scan.legs, connections, transferEdges, db);
+    options.push({ found: true, legs, overallConfidence: worstBand(legs.map((l) => l.confidence)) });
+    excludedTripIds.add(scan.legs[0].tripId);
+  }
+
+  return { found: options.length > 0, options };
+}
+
 function minTransferRequired(transferEdges: TransferEdge[], fromStopId: string, toStopId: string): number {
   if (fromStopId === toStopId) return 5;
   const edge = transferEdges.find((t) => t.fromStopId === fromStopId && t.toStopId === toStopId);

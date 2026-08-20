@@ -19,7 +19,7 @@ const testToolCallContext: ToolCallContext = { toolCallId: 'test', messages: [],
 // typing), even though these tools' `execute` functions only ever resolve to
 // a plain object. Narrow to the concrete shape at each call site below,
 // grounded in the actual `execute` implementations in `./tools`, not `any`.
-type PlanJourneyOutput = { plan: JourneyPlanResult; narration: string } | { plan: null; narration: string };
+type PlanJourneyOutput = { options: JourneyPlanResult[]; narration: string } | { options: null; narration: string };
 type FindLastSafeDepartureOutput =
   | { plan: LastSafeDepartureResult; narration: string }
   | { plan: null; narration: string };
@@ -33,19 +33,34 @@ describe('journey tools', () => {
     await ingestDemoCorridor(db);
   });
 
-  test('plan_journey returns a structured plan and a narration, called directly as a function', async () => {
+  test('plan_journey returns multiple distinct options, earliest first, with narration', async () => {
     const output = (await tools.plan_journey.execute!(
       { origin: 'OOTY_STAND', destination: 'SRIVILLIPUTHUR_STAND', departAfter: '2026-08-16T15:00:00', maxLegs: 4 },
       testToolCallContext,
     )) as PlanJourneyOutput;
 
-    if (!output.plan) throw new Error('expected a found plan');
-    expect(output.plan.found).toBe(true);
-    expect(output.plan.legs.map((l) => l.tripId)).toEqual(['OOTY_MTP_A', 'MTP_TPR_A', 'TPR_MDU_LAST', 'MDU_SVP_LAST']);
+    if (!output.options) throw new Error('expected found options');
+    expect(output.options.length).toBeGreaterThan(0);
+    expect(output.options[0].found).toBe(true);
+    expect(output.options[0].legs.map((l) => l.tripId)).toEqual(['OOTY_MTP_A', 'MTP_TPR_A', 'TPR_MDU_LAST', 'MDU_SVP_LAST']);
     expect(typeof output.narration).toBe('string');
     expect(output.narration.length).toBeGreaterThan(0);
     expect(output.narration).toContain('Ooty Bus Stand');
     expect(output.narration).toContain('15:40');
+  });
+
+  test('plan_journey returns more than one option when more than one departure exists', async () => {
+    // The demo corridor has 3 Ooty->Mettupalayam departures; asking from
+    // 07:00 leaves all 3 (08:00, 15:40, 17:20) as candidates.
+    const output = (await tools.plan_journey.execute!(
+      { origin: 'OOTY_STAND', destination: 'MADURAI_STAND', departAfter: '2026-08-16T07:00:00', maxLegs: 4 },
+      testToolCallContext,
+    )) as PlanJourneyOutput;
+
+    if (!output.options) throw new Error('expected found options');
+    expect(output.options.length).toBeGreaterThan(1);
+    expect(output.narration).toContain('Option 1:');
+    expect(output.narration).toContain('Option 2:');
   });
 
   test('find_last_safe_departure returns the safe plan and a break explanation', async () => {
@@ -66,7 +81,7 @@ describe('journey tools', () => {
       { origin: 'NOWHERE_MADE_UP', destination: 'SRIVILLIPUTHUR_STAND', departAfter: '2026-08-16T15:00:00Z', maxLegs: 4 },
       testToolCallContext,
     )) as PlanJourneyOutput;
-    expect(output.plan).toBeNull();
+    expect(output.options).toBeNull();
     expect(output.narration).toContain('NOWHERE_MADE_UP');
   });
 
@@ -75,7 +90,7 @@ describe('journey tools', () => {
       { origin: 'OOTY_STAND', destination: 'SRIVILLIPUTHUR_STAND', departAfter: 'tomorrow 3pm', maxLegs: 4 },
       testToolCallContext,
     )) as PlanJourneyOutput;
-    expect(output.plan).toBeNull();
+    expect(output.options).toBeNull();
     expect(output.narration.length).toBeGreaterThan(0);
   });
 

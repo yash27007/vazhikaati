@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { tool } from 'ai';
 import type { createDb } from '../db/client';
-import { planJourney } from '../engine/search';
+import { planJourneyOptions } from '../engine/search';
 import { findLastSafeDeparture } from '../engine/lastSafeDeparture';
 import { StopNotFoundError, parseIstDateTime } from '../engine/shared';
 import { mergeSameTripLegsForDisplay } from '../engine/legDisplay';
@@ -24,7 +24,10 @@ export const isoDateTimeString = z
 export function createJourneyTools(db: ReturnType<typeof createDb>) {
   return {
     plan_journey: tool({
-      description: 'Find viable multi-leg bus journeys between two named stops, departing after a given time.',
+      description:
+        'Find viable multi-leg bus journeys between two named stops, departing after a given time. ' +
+        'Returns up to a few distinct options (different departures/routes), earliest first, not just one — ' +
+        'present the real choices to the traveller rather than picking one for them.',
       inputSchema: z.object({
         origin: z.string().describe('Origin stop name'),
         destination: z.string().describe('Destination stop name'),
@@ -33,14 +36,14 @@ export function createJourneyTools(db: ReturnType<typeof createDb>) {
       }),
       execute: async ({ origin, destination, departAfter, maxLegs }) => {
         try {
-          const plan = await planJourney(db, { origin, destination, departAfter, maxLegs });
-          return { plan, narration: narratePlan(plan) };
+          const result = await planJourneyOptions(db, { origin, destination, departAfter, maxLegs });
+          return { options: result.options, narration: narratePlanOptions(result) };
         } catch (error) {
           if (error instanceof StopNotFoundError) {
-            return { plan: null, narration: `I don't have "${error.query}" in the ledger yet.` };
+            return { options: null, narration: `I don't have "${error.query}" in the ledger yet.` };
           }
           if (error instanceof RangeError) {
-            return { plan: null, narration: `I couldn't parse "${departAfter}" as a datetime — please give an ISO 8601 datetime.` };
+            return { options: null, narration: `I couldn't parse "${departAfter}" as a datetime — please give an ISO 8601 datetime.` };
           }
           throw error;
         }
@@ -72,7 +75,7 @@ export function createJourneyTools(db: ReturnType<typeof createDb>) {
   };
 }
 
-function narratePlan(plan: JourneyPlanResult): string {
+function narrateSinglePlan(plan: JourneyPlanResult): string {
   if (!plan.found) return 'No route was found in the schedule for that request.';
   // Consecutive legs on the same physical bus (an intermediate stop, not a
   // transfer) are collapsed to one step — narrating every stop a single
@@ -84,6 +87,14 @@ function narratePlan(plan: JourneyPlanResult): string {
     })
     .join(', then ');
   return `Take: ${steps}. Overall confidence: ${plan.overallConfidence}.`;
+}
+
+function narratePlanOptions(result: { found: boolean; options: JourneyPlanResult[] }): string {
+  if (!result.found || result.options.length === 0) {
+    return 'No route was found in the schedule for that request.';
+  }
+  if (result.options.length === 1) return narrateSinglePlan(result.options[0]);
+  return result.options.map((plan, index) => `Option ${index + 1}: ${narrateSinglePlan(plan)}`).join(' ');
 }
 
 function narrateLastSafeDeparture(plan: LastSafeDepartureResult): string {

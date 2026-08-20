@@ -1,5 +1,5 @@
 import type { UIMessage } from 'ai';
-import { getPlanOutput } from './planPart';
+import { getPlanOutput, foundPlans } from './planPart';
 import { JourneyPlanCard } from './JourneyPlanCard';
 
 export function MessageBubble({ message }: { message: UIMessage }) {
@@ -25,11 +25,20 @@ export function MessageBubble({ message }: { message: UIMessage }) {
 
           const planOutput = getPlanOutput(part);
           if (planOutput) {
-            const { plan, narration } = planOutput;
+            const plans = foundPlans(planOutput);
             return (
               <div key={index} className="flex flex-col gap-3">
-                <p className="whitespace-pre-wrap text-[0.9375rem] leading-relaxed">{narration}</p>
-                {plan && plan.found && <JourneyPlanCard plan={plan} />}
+                <p className="whitespace-pre-wrap text-[0.9375rem] leading-relaxed">{planOutput.narration}</p>
+                {plans.map((plan, planIndex) => (
+                  <div key={planIndex} className="flex flex-col gap-1.5">
+                    {plans.length > 1 && (
+                      <span className="font-mono text-[0.6875rem] uppercase tracking-[0.16em] text-ink-muted">
+                        Option {planIndex + 1}
+                      </span>
+                    )}
+                    <JourneyPlanCard plan={plan} />
+                  </div>
+                ))}
               </div>
             );
           }
