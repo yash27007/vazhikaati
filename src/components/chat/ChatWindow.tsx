@@ -6,6 +6,9 @@ import { useEffect, useRef } from 'react';
 import type { UIMessage } from 'ai';
 import { MessageBubble } from './MessageBubble';
 import { ChatInput } from './ChatInput';
+import { Hero } from './Hero';
+import { ProblemsSection } from './ProblemsSection';
+import { AboutPanel } from './AboutPanel';
 
 const STORAGE_KEY = 'vazhikaati-chat-history';
 
@@ -57,20 +60,21 @@ export function ChatWindow() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  const disabled = status === 'submitted' || status === 'streaming';
+
+  if (messages.length === 0) {
+    return (
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <Hero onSend={(text) => sendMessage({ text })} />
+        <ProblemsSection />
+        <AboutPanel />
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-1 flex-col overflow-hidden">
-      <div className="flex flex-1 flex-col gap-3 overflow-y-auto px-4 py-6 sm:gap-4 sm:px-6">
-        {messages.length === 0 && (
-          <div className="my-auto flex flex-col items-center gap-3 px-2 py-10 text-center">
-            <span
-              aria-hidden="true"
-              className="h-px w-10 bg-line-strong"
-            />
-            <p className="max-w-sm text-[0.9375rem] leading-relaxed text-balance text-ink-muted">
-              Ask about a journey — e.g. &quot;How do I get from Ooty to Srivilliputhur tonight?&quot;
-            </p>
-          </div>
-        )}
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="mx-auto flex w-full max-w-3xl min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-6 sm:gap-4 sm:px-6">
         {messages.map((message) => (
           <MessageBubble key={message.id} message={message} />
         ))}
@@ -93,10 +97,9 @@ export function ChatWindow() {
         )}
         <div ref={bottomRef} />
       </div>
-      <ChatInput
-        disabled={status === 'submitted' || status === 'streaming'}
-        onSend={(text) => sendMessage({ text })}
-      />
+      <div className="mx-auto w-full max-w-3xl px-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6">
+        <ChatInput variant="bar" disabled={disabled} onSend={(text) => sendMessage({ text })} />
+      </div>
     </div>
   );
 }

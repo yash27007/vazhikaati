@@ -14,96 +14,60 @@
  * is the only warm thing on the page and reads at a glance in the dark.
  */
 
+/*
+ * Forced dark. The brief asked for the OpenAI/Vercel treatment
+ * specifically — near-black surfaces carrying the whole page, not a
+ * user preference — so there is no light palette and no media query;
+ * :root simply *is* the dark theme.
+ */
 :root {
   /* Base surfaces and ink */
-  --background: #f2f5fa;
-  --foreground: #141824;
+  --background: #08090c;
+  --foreground: #f2f3f5;
 
-  --surface: #f2f5fa;
-  --surface-raised: #ffffff;
-  --surface-sunken: #e6ebf4;
-  --ink: #141824;
-  --ink-muted: #57617a;
-  --ink-faint: #7d879c;
-  --line: #d8dfeb;
-  --line-strong: #bfc9db;
+  --surface: #08090c;
+  --surface-raised: #131418;
+  --surface-sunken: #000000;
+  --ink: #f2f3f5;
+  --ink-muted: #98a0ad;
+  --ink-faint: #6f7b93;
+  --line: #1d1f26;
+  --line-strong: #2c2f38;
 
   /* Brand accent — cool, never warm */
-  --accent: #2b45c6;
-  --accent-hover: #24399f;
-  --accent-ink: #ffffff;
-  --accent-soft: #e5e9fb;
+  --accent: #6f7fff;
+  --accent-hover: #8a97ff;
+  --accent-ink: #08090c;
+  --accent-soft: #171a33;
 
   /*
    * Confidence ramp. Four bands, separated by hue *and* lightness so they
    * survive a dim phone screen and the common red/green confusions; the
    * badge also carries a pip meter, so colour is never the only signal.
    */
-  --band-safe: #0b7a6b;
-  --band-safe-bg: #d8f0ea;
-  --band-safe-ink: #06544a;
+  --band-safe: #3fd6b8;
+  --band-safe-bg: #0c2f2a;
+  --band-safe-ink: #7fe8d1;
 
-  --band-tight: #8a6100;
-  --band-tight-bg: #faeecd;
-  --band-tight-ink: #5f4300;
+  --band-tight: #f0c04a;
+  --band-tight-bg: #33260a;
+  --band-tight-ink: #f6d484;
 
-  --band-risky: #b4400f;
-  --band-risky-bg: #fbe3d7;
-  --band-risky-ink: #832d08;
+  --band-risky: #ff9160;
+  --band-risky-bg: #3a1a0c;
+  --band-risky-ink: #ffb08b;
 
-  --band-broken: #a81249;
-  --band-broken-bg: #fbdfe8;
-  --band-broken-ink: #7a0b34;
+  --band-broken: #ff7ba3;
+  --band-broken-bg: #38091c;
+  --band-broken-ink: #ffa3bf;
 
-  --danger: #b3123a;
-  --danger-bg: #fbdfe6;
+  --danger: #ff8098;
+  --danger-bg: #380a17;
 
   /* The one warm note outside the confidence ramp: the amber roll-sign
      lamp on the front of a night bus. Reserved for a single accent per
      screen — never a background, never repeated. */
-  --signal: #a6650a;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0b0e15;
-    --foreground: #e4e9f3;
-
-    --surface: #0b0e15;
-    --surface-raised: #151a25;
-    --surface-sunken: #070a10;
-    --ink: #e4e9f3;
-    --ink-muted: #98a3ba;
-    --ink-faint: #6f7b93;
-    --line: #232b3a;
-    --line-strong: #333d51;
-
-    --accent: #6f7fff;
-    --accent-hover: #8a97ff;
-    --accent-ink: #0b0e15;
-    --accent-soft: #1b2140;
-
-    --band-safe: #3fd6b8;
-    --band-safe-bg: #0c2f2a;
-    --band-safe-ink: #7fe8d1;
-
-    --band-tight: #f0c04a;
-    --band-tight-bg: #33260a;
-    --band-tight-ink: #f6d484;
-
-    --band-risky: #ff9160;
-    --band-risky-bg: #3a1a0c;
-    --band-risky-ink: #ffb08b;
-
-    --band-broken: #ff7ba3;
-    --band-broken-bg: #38091c;
-    --band-broken-ink: #ffa3bf;
-
-    --danger: #ff8098;
-    --danger-bg: #380a17;
-
-    --signal: #ffb454;
-  }
+  --signal: #ffb454;
 }
 
 @theme inline {
@@ -186,18 +150,6 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
-}
-
-/* The seam between chat and the about panel, on wide screens: a ticket-stub
-   tear line, not a plain rule — the split IS a perforation, not a border. */
-.vk-perforation {
-  background-image: repeating-linear-gradient(
-    to bottom,
-    var(--line-strong) 0,
-    var(--line-strong) 4px,
-    transparent 4px,
-    transparent 11px
-  );
 }
 
 /* One focus treatment everywhere, visible on both grounds. */

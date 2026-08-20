@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { Mic01Icon } from 'hugeicons-react';
 
 export function MicButton({
   language,
@@ -90,23 +91,30 @@ export function MicButton({
   }
 
   return (
-    <div className="flex flex-col items-center gap-1.5">
+    <div className="relative">
       <button
         type="button"
         onClick={recording ? stopRecording : startRecording}
         disabled={busy}
         aria-pressed={recording}
         aria-label={recording ? 'Stop recording' : 'Start voice input'}
-        className={`flex h-11 w-11 items-center justify-center rounded-full text-lg transition-colors disabled:opacity-40 ${
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors disabled:opacity-40 ${
           recording
             ? 'bg-band-broken text-surface-raised ring-4 ring-band-broken-bg animate-pulse'
-            : 'bg-accent-soft text-accent hover:bg-accent hover:text-accent-ink'
+            : 'bg-ink text-surface hover:bg-accent hover:text-accent-ink'
         }`}
       >
-        {busy ? '…' : '🎤'}
+        {busy ? (
+          <span aria-hidden="true" className="h-2 w-2 animate-pulse rounded-full bg-current" />
+        ) : (
+          <Mic01Icon size={17} strokeWidth={1.8} />
+        )}
       </button>
       {errorMessage && (
-        <span role="alert" className="max-w-28 text-center text-[0.6875rem] leading-tight text-danger">
+        <span
+          role="alert"
+          className="absolute top-full right-0 z-10 mt-1.5 w-36 text-right text-[0.6875rem] leading-tight text-danger"
+        >
           {errorMessage}
         </span>
       )}
