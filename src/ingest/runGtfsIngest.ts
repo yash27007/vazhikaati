@@ -5,8 +5,8 @@ import { ingestGtfsFeed } from './gtfs';
 async function main() {
   const feedDir = process.argv[2] ?? 'mock-gtfs-feed';
 
-  console.log(`Generating mock GTFS feed at ${feedDir}/...`);
-  generateMockGtfsFeed(feedDir);
+  console.log(`Generating mock GTFS feed at ${feedDir}/... (fetches real road routing from OSRM, may take a moment)`);
+  await generateMockGtfsFeed(feedDir);
 
   console.log(`Ingesting GTFS feed from ${feedDir}/...`);
   const result = await ingestGtfsFeed(db, feedDir);

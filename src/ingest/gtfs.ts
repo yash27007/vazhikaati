@@ -1,8 +1,8 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { parse } from 'csv-parse/sync';
 import type { createDb } from '../db/client';
-import { agencies, stops, routes, calendars, trips, stopTimes } from '../db/schema';
+import { agencies, stops, routes, calendars, trips, stopTimes, transfers } from '../db/schema';
 
 export interface IngestResult {
   rowsProcessed: number;
@@ -176,6 +176,26 @@ export async function ingestGtfsFeed(
     } catch (error) {
       result.rowsRejected++;
       result.rejections.push({ row: i + 1, reason: (error as Error).message });
+    }
+  }
+
+  // transfers.txt is optional in the GTFS spec (not every feed has one) —
+  // only ingest it if the feed actually provides one. Reads this project's
+  // own generator's column (min_transfer_minutes, plain minutes) rather
+  // than the official GTFS min_transfer_time (seconds) — this project's
+  // transfers table has always stored minutes (see transfers.ts).
+  if (existsSync(join(feedDir, 'transfers.txt'))) {
+    const transferRows = readGtfsFile(feedDir, 'transfers.txt');
+    for (const row of transferRows) {
+      await db
+        .insert(transfers)
+        .values({
+          fromStopId: row.from_stop_id,
+          toStopId: row.to_stop_id,
+          minTransferMinutes: Number(row.min_transfer_minutes),
+          transferMode: 'local_bus',
+        })
+        .onConflictDoNothing();
     }
   }
 

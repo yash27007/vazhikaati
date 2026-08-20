@@ -4,6 +4,7 @@ import type { createDb } from '../db/client';
 import { planJourney } from '../engine/search';
 import { findLastSafeDeparture } from '../engine/lastSafeDeparture';
 import { StopNotFoundError, parseIstDateTime } from '../engine/shared';
+import { mergeSameTripLegsForDisplay } from '../engine/legDisplay';
 import type { JourneyPlanResult } from '../engine/types';
 import type { LastSafeDepartureResult } from '../engine/lastSafeDeparture';
 
@@ -73,7 +74,10 @@ export function createJourneyTools(db: ReturnType<typeof createDb>) {
 
 function narratePlan(plan: JourneyPlanResult): string {
   if (!plan.found) return 'No route was found in the schedule for that request.';
-  const steps = plan.legs
+  // Consecutive legs on the same physical bus (an intermediate stop, not a
+  // transfer) are collapsed to one step — narrating every stop a single
+  // bus makes as its own "then" would describe one ride as several.
+  const steps = mergeSameTripLegsForDisplay(plan.legs)
     .map((l) => `${l.tripId} from ${l.fromStopName} (${l.departureLocal}) to ${l.toStopName} (${l.arrivalLocal})`)
     .join(', then ');
   return `Take: ${steps}. Overall confidence: ${plan.overallConfidence}.`;

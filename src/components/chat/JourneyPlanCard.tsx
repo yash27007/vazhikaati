@@ -1,6 +1,7 @@
 import type { JourneyPlanResult } from '../../engine/types';
 import type { LastSafeDepartureResult } from '../../engine/lastSafeDeparture';
 import type { ConfidenceBand } from '../../engine/types';
+import { mergeSameTripLegsForDisplay } from '../../engine/legDisplay';
 
 const BAND_STYLES: Record<ConfidenceBand, string> = {
   safe: 'bg-band-safe-bg text-band-safe-ink',
@@ -51,11 +52,12 @@ export function JourneyPlanCard({ plan }: { plan: JourneyPlanResult | LastSafeDe
   if (!plan.found) return null;
 
   const breakExplanation = 'breakExplanation' in plan ? plan.breakExplanation : null;
+  const displayLegs = mergeSameTripLegsForDisplay(plan.legs);
 
   return (
     <div className="rounded-2xl border border-line bg-surface-sunken p-3 sm:p-4">
       <ol className="flex flex-col gap-4">
-        {plan.legs.map((leg, index) => (
+        {displayLegs.map((leg, index) => (
           <li key={`${leg.tripId}-${index}`} className="flex gap-3">
             <span
               aria-hidden="true"

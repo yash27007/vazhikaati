@@ -2,7 +2,7 @@ import { describe, test, expect, beforeEach } from 'bun:test';
 import { join } from 'node:path';
 import { eq, asc } from 'drizzle-orm';
 import { setupTestDb, truncateAll } from '../db/testDb';
-import { stopTimes, stops } from '../db/schema';
+import { stopTimes, stops, transfers } from '../db/schema';
 import { ingestGtfsFeed } from './gtfs';
 
 const FIXTURE_DIR = join(import.meta.dir, 'fixtures/gtfs-sample');
@@ -52,6 +52,15 @@ describe('ingestGtfsFeed', () => {
     expect(row.name).toBe('Fixture Town A');
     expect(row.lat).not.toBeNull();
     expect(row.lon).not.toBeNull();
+  });
+
+  test('ingests transfers.txt when the feed provides one', async () => {
+    await ingestGtfsFeed(db, FIXTURE_DIR);
+
+    const rows = await db.select().from(transfers).where(eq(transfers.fromStopId, 'FIX_A'));
+    expect(rows).toHaveLength(1);
+    expect(rows[0].toStopId).toBe('FIX_C');
+    expect(rows[0].minTransferMinutes).toBe(20);
   });
 
   test('is idempotent — re-running does not duplicate or error', async () => {
