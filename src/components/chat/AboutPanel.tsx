@@ -19,13 +19,22 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
 export function AboutPanel() {
   return (
     <div className="flex flex-col gap-6 p-5 sm:p-6">
-      <div className="flex flex-col gap-2">
-        <Eyebrow>The ledger</Eyebrow>
-        <p className="text-[0.9375rem] leading-relaxed text-ink">
-          Nobody has written down which government buses go where and when,
-          in a form a computer can read. This is that missing notebook — one
-          list of every stop and timing, and an engine that works out
-          journeys where no single bus goes all the way.
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-2">
+          <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-signal" />
+          <Eyebrow>Why this exists</Eyebrow>
+        </div>
+        <p className="text-[1.0625rem] font-semibold leading-snug tracking-tight text-ink">
+          Nobody has written down which bus goes where —{' '}
+          <span className="text-signal">until now</span>.
+        </p>
+        <p className="text-[0.875rem] leading-relaxed text-ink-muted">
+          Which government bus, going where, at what time — it exists on
+          paper, on notice boards, in conductors&apos; heads, not in a form a
+          computer can read. Ask this the way you&apos;d ask a friend, in
+          whatever language you think in, and it works out which buses to
+          catch, in what order, and whether you&apos;ll actually make it —
+          with a plain warning if a connection is too risky to trust.
         </p>
       </div>
 

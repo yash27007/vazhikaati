@@ -57,6 +57,11 @@
 
   --danger: #b3123a;
   --danger-bg: #fbdfe6;
+
+  /* The one warm note outside the confidence ramp: the amber roll-sign
+     lamp on the front of a night bus. Reserved for a single accent per
+     screen — never a background, never repeated. */
+  --signal: #a6650a;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -96,6 +101,8 @@
 
     --danger: #ff8098;
     --danger-bg: #380a17;
+
+    --signal: #ffb454;
   }
 }
 
@@ -132,6 +139,8 @@
 
   --color-danger: var(--danger);
   --color-danger-bg: var(--danger-bg);
+
+  --color-signal: var(--signal);
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
