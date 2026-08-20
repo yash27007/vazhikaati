@@ -40,16 +40,36 @@ deliberately deferred to their own future design cycles.
 ## What's implemented
 
 **The ledger + engine** (`src/db/`, `src/engine/`, `src/ingest/`): a
-Postgres/Drizzle schema for stops, routes, trips, stop times, transfers,
-and trip reliability; ingestion of both a real published SETC timetable CSV
-and a hand-authored synthetic demo corridor (Ooty → Mettupalayam → Tirupur
-→ Madurai → Srivilliputhur) for deterministic testing; an in-memory
-earliest-arrival connection-scan search algorithm; a "Connection Confidence"
-scorer that never fabricates a reliability number (no data → "insufficient
-data," not a guess); a forward multi-leg journey search
-(`planJourney`); and a backward "last safe departure" search that
-disqualifies chains requiring an unsafe overnight wait at a stop. All times
-are anchored to IST (Asia/Kolkata) at the source, not UTC.
+Postgres/Drizzle schema that's GTFS-shaped from the start (stops, routes,
+trips, stop times, calendars, transfers, trip reliability); a real GTFS
+static-feed parser (`gtfs.ts`) that ingests standard `agency/stops/routes/
+trips/stop_times/calendar.txt` files into that schema, preserving each
+trip's full ordered stop sequence — not just an origin/destination pair;
+and an in-memory earliest-arrival connection-scan search algorithm with a
+"Connection Confidence" scorer that never fabricates a reliability number
+(no data → "insufficient data," not a guess). A forward multi-leg journey
+search (`planJourney`) and a backward "last safe departure" search
+disqualify chains requiring an unsafe overnight wait at a stop, and both
+correctly treat continuing on the same physical bus through an intermediate
+stop as free — not a transfer, not an extra leg. All times are anchored to
+IST (Asia/Kolkata) at the source, not UTC.
+
+**Data sources — what's real and what's mocked, disclosed plainly:**
+- A real, published SETC timetable CSV (Tamil Nadu's open-data portal) —
+  real routes and timings, but the source data itself only lists an
+  origin/destination pair per trip, no intermediate stops.
+- A small hand-authored synthetic demo corridor, for deterministic tests.
+- A generated mock GTFS feed (`bun run ingest:gtfs`, `generateMockGtfs.ts`)
+  covering a wider Tamil Nadu network: stop coordinates are real OSM town
+  locations, but the routes, schedules, and trip IDs are synthetic — not a
+  real TNSTC/SETC timetable. Travel times are estimated from real
+  haversine distance at an assumed average speed, not a real road-routing
+  engine. This is what actually demonstrates multi-stop journeys
+  end-to-end, because it's the only source with real intermediate stops.
+  **The point of building a real GTFS parser rather than more one-off CSV
+  logic:** if Tamil Nadu's transport department ever publishes a real GTFS
+  feed, it ingests through this exact same code path, unchanged — the
+  mock data is a stand-in for that, not the product's ceiling.
 
 **The LLM tool layer** (`src/llm/`): two AI SDK tools —
 `plan_journey` and `find_last_safe_departure` — wrapping the engine, plus a
@@ -72,10 +92,12 @@ to review before sending, not auto-sent. Chat history persists in
 **Running without an OpenAI key:** set `MOCK_LLM=true` (already the default
 in this repo's `.env`). Both `/api/chat` and `/api/transcribe` swap in
 scripted responses in that mode — `/api/chat`'s mock still calls the real
-`plan_journey` tool against real demo-corridor data for a recognized
-Ooty/Srivilliputhur-shaped query, so the whole UI is exercisable end to end
-with no API key and no cost. `bun run dev`, then open `/chat` (or `/`,
-which redirects there) and ask about a journey from Ooty to Srivilliputhur.
+`plan_journey` tool against real data for a recognized Ooty/Srivilliputhur
+query, so the whole UI is exercisable end to end with no API key and no
+cost. Seed the database with `bun run ingest` (real SETC CSV + demo
+corridor) and `bun run ingest:gtfs` (generates and ingests the mock GTFS
+network) before running. `bun run dev`, then open `/chat` (or `/`, which
+redirects there) and ask about a journey — e.g. Ooty to Srivilliputhur.
 
 **Testing:** `bun test` (needs local Postgres — see `.env.example`),
 `bun run lint`, `bunx tsc --noEmit` / `bun run typecheck`, `bun run build`.
