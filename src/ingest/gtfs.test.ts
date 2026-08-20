@@ -2,7 +2,7 @@ import { describe, test, expect, beforeEach } from 'bun:test';
 import { join } from 'node:path';
 import { eq, asc } from 'drizzle-orm';
 import { setupTestDb, truncateAll } from '../db/testDb';
-import { stopTimes } from '../db/schema';
+import { stopTimes, stops } from '../db/schema';
 import { ingestGtfsFeed } from './gtfs';
 
 const FIXTURE_DIR = join(import.meta.dir, 'fixtures/gtfs-sample');
@@ -36,6 +36,22 @@ describe('ingestGtfsFeed', () => {
     expect(rows[1].arrivalMinutes).toBe(9 * 60 + 15);
     expect(rows[1].departureMinutes).toBe(9 * 60 + 20);
     expect(rows[1].haltMinutes).toBe(5);
+  });
+
+  test('enriches a stop that already exists (e.g. from another ingester) with the GTFS name and coordinates', async () => {
+    // Simulates the real collision: the SETC CSV ingester creates a bare
+    // stop row (raw town name, no coordinates) for a town that the GTFS
+    // feed ALSO names — same real-world place, same slugified stop ID. The
+    // GTFS feed's richer name/coordinates must not be silently dropped by
+    // onConflictDoNothing just because the other ingester ran first.
+    await db.insert(stops).values({ stopId: 'FIX_A', name: 'FIX_A', stopType: 'town_stand', townId: 'FIX_A', dataTier: 1 });
+
+    await ingestGtfsFeed(db, FIXTURE_DIR);
+
+    const [row] = await db.select().from(stops).where(eq(stops.stopId, 'FIX_A'));
+    expect(row.name).toBe('Fixture Town A');
+    expect(row.lat).not.toBeNull();
+    expect(row.lon).not.toBeNull();
   });
 
   test('is idempotent — re-running does not duplicate or error', async () => {

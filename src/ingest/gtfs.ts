@@ -73,20 +73,32 @@ export async function ingestGtfsFeed(
       .onConflictDoNothing();
   }
 
+  // A stop this feed names may already exist under the same stopId from
+  // another ingester (e.g. the SETC CSV path, which slugifies a town name
+  // to the same ID this feed uses for the same real-world place) — that
+  // earlier row is typically a bare name with no coordinates.
+  // onConflictDoUpdate here (not onConflictDoNothing) means GTFS's fuller
+  // name/coordinates always win, regardless of which ingester ran first,
+  // instead of silently keeping whichever ran first's incomplete data.
   const stopRows = readGtfsFile(feedDir, 'stops.txt');
   for (const row of stopRows) {
+    const lat = row.stop_lat || null;
+    const lon = row.stop_lon || null;
     await db
       .insert(stops)
       .values({
         stopId: row.stop_id,
         name: row.stop_name,
-        lat: row.stop_lat || null,
-        lon: row.stop_lon || null,
+        lat,
+        lon,
         stopType: 'town_stand',
         townId: row.stop_id,
         dataTier: 2,
       })
-      .onConflictDoNothing();
+      .onConflictDoUpdate({
+        target: stops.stopId,
+        set: { name: row.stop_name, lat, lon },
+      });
   }
 
   const routeRows = readGtfsFile(feedDir, 'routes.txt');
