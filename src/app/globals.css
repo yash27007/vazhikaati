@@ -179,6 +179,18 @@ body {
   }
 }
 
+/* The seam between chat and the about panel, on wide screens: a ticket-stub
+   tear line, not a plain rule — the split IS a perforation, not a border. */
+.vk-perforation {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    var(--line-strong) 0,
+    var(--line-strong) 4px,
+    transparent 4px,
+    transparent 11px
+  );
+}
+
 /* One focus treatment everywhere, visible on both grounds. */
 :where(a, button, input, textarea, select, [tabindex]):focus-visible {
   outline: 2px solid var(--accent);
