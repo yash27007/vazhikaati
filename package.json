@@ -10,6 +10,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "ingest": "bun run src/ingest/runIngest.ts",
+    "ingest:gtfs": "bun run src/ingest/runGtfsIngest.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
   },

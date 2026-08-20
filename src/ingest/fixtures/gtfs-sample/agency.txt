@@ -1,0 +1,2 @@
+agency_id,agency_name,agency_url,agency_timezone
+FIXTURE_AGENCY,Fixture Transit,https://example.com,Asia/Kolkata

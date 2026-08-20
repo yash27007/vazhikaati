@@ -64,8 +64,13 @@ export async function buildLegsWithConfidence(
     const leg = scanLegs[i];
     const previous = i > 0 ? scanLegs[i - 1] : null;
 
+    // A same-trip continuation (still riding the same physical bus through
+    // an intermediate stop) is not a transfer at all — there's no risk of
+    // missing it, so it's scored the same as the origin leg (no buffer to
+    // evaluate), not as a transfer with a near-zero/negative buffer.
+    const isSameTripContinuation = previous !== null && previous.tripId === leg.tripId;
     let transferBufferMinutes: number | null = null;
-    if (previous) {
+    if (previous && !isSameTripContinuation) {
       const required = minTransferRequired(transferEdges, previous.toStopId, leg.fromStopId);
       transferBufferMinutes = leg.departureAbsMin - previous.arrivalAbsMin - required;
     }
