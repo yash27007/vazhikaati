@@ -85,6 +85,11 @@ export function JourneyPlanCard({ plan }: { plan: JourneyPlanResult | LastSafeDe
                 </div>
                 <ConfidenceBadge band={leg.confidence} />
               </div>
+              {leg.viaStopNames.length > 0 && (
+                <div className="truncate text-[0.75rem] leading-snug text-ink-muted">
+                  via {leg.viaStopNames.join(', ')}
+                </div>
+              )}
               <div className="tabular font-mono text-[0.6875rem] tracking-wide text-ink-faint">
                 {leg.tripId}
               </div>

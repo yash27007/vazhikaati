@@ -31,6 +31,12 @@ describe('mergeSameTripLegsForDisplay', () => {
     expect(merged[0].toStopId).toBe('D');
     expect(merged[0].departureLocal).toBe('06:00');
     expect(merged[0].arrivalLocal).toBe('09:00');
+    expect(merged[0].viaStopNames).toEqual(['B', 'C']);
+  });
+
+  test('a single-hop leg has no via stops', () => {
+    const legs: JourneyLeg[] = [leg({ tripId: 'T1', fromStopId: 'A', toStopId: 'B' })];
+    expect(mergeSameTripLegsForDisplay(legs)[0].viaStopNames).toEqual([]);
   });
 
   test('does not merge legs on different trips', () => {

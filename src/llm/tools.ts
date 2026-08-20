@@ -78,7 +78,10 @@ function narratePlan(plan: JourneyPlanResult): string {
   // transfer) are collapsed to one step — narrating every stop a single
   // bus makes as its own "then" would describe one ride as several.
   const steps = mergeSameTripLegsForDisplay(plan.legs)
-    .map((l) => `${l.tripId} from ${l.fromStopName} (${l.departureLocal}) to ${l.toStopName} (${l.arrivalLocal})`)
+    .map((l) => {
+      const via = l.viaStopNames.length > 0 ? ` via ${l.viaStopNames.join(', ')}` : '';
+      return `${l.tripId} from ${l.fromStopName} (${l.departureLocal})${via} to ${l.toStopName} (${l.arrivalLocal})`;
+    })
     .join(', then ');
   return `Take: ${steps}. Overall confidence: ${plan.overallConfidence}.`;
 }
