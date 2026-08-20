@@ -60,12 +60,20 @@ IST (Asia/Kolkata) at the source, not UTC.
   origin/destination pair per trip, no intermediate stops.
 - A small hand-authored synthetic demo corridor, for deterministic tests.
 - A generated mock GTFS feed (`bun run ingest:gtfs`, `generateMockGtfs.ts`)
-  covering a wider Tamil Nadu network: stop coordinates are real OSM town
-  locations, but the routes, schedules, and trip IDs are synthetic — not a
-  real TNSTC/SETC timetable. Travel times are estimated from real
-  haversine distance at an assumed average speed, not a real road-routing
-  engine. This is what actually demonstrates multi-stop journeys
-  end-to-end, because it's the only source with real intermediate stops.
+  covering five Tamil Nadu corridors (Ooty–Sengottai via Tiruppur,
+  Coimbatore–Madurai, Coimbatore–Salem, Chennai–Tirunelveli via Trichy,
+  Trichy–Madurai): stop names/coordinates are real bus-stand locations
+  (user-verified, including Madurai's two real terminals — Mattuthavani
+  and Arapalayam, linked by a real transfer edge), and corridor topology
+  (which towns a route actually passes through, in what order) was
+  confirmed against real travel experience, not invented. Every leg's
+  travel time is a real road-network estimate (OSRM's public routing
+  API, driving the actual road geometry — ghats included — scaled by a
+  bus-realism factor), not a flat distance/speed guess. What's still
+  synthetic: the specific schedules, trip IDs, and service frequencies —
+  not a real TNSTC/SETC timetable. This is what actually demonstrates
+  multi-stop journeys end-to-end, because it's the only source with real
+  intermediate stops.
   **The point of building a real GTFS parser rather than more one-off CSV
   logic:** if Tamil Nadu's transport department ever publishes a real GTFS
   feed, it ingests through this exact same code path, unchanged — the
