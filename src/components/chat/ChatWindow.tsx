@@ -2,13 +2,11 @@
 
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { UIMessage } from 'ai';
 import { MessageBubble } from './MessageBubble';
 import { ChatInput } from './ChatInput';
 import { Hero } from './Hero';
-import { ProblemsSection } from './ProblemsSection';
-import { AboutPanel } from './AboutPanel';
 
 const STORAGE_KEY = 'vazhikaati-chat-history';
 
@@ -32,6 +30,13 @@ export function ChatWindow() {
   // races the hydration effect and can momentarily overwrite stored history
   // right before the real data lands.
   const hydratedRef = useRef(false);
+  // The landing page hands its hero query off as `/chat?q=...` rather than
+  // sending it directly — it has no useChat instance of its own. True for
+  // exactly the render(s) before that handoff is consumed below, so the
+  // empty state can skip straight past the Hero flash into "loading".
+  const [pendingFromQuery] = useState(
+    () => typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('q'),
+  );
 
   // Hydrate from localStorage after mount only — reading it during the
   // initial render would make the client's first render diverge from the
@@ -40,6 +45,14 @@ export function ChatWindow() {
     const stored = loadStoredMessages();
     if (stored.length > 0) setMessages(stored);
     hydratedRef.current = true;
+
+    const query = new URLSearchParams(window.location.search).get('q');
+    if (query && query.trim()) {
+      sendMessage({ text: query });
+      // Drop `?q=` from the address bar so a refresh or back-navigation
+      // doesn't resend the same query as a duplicate message.
+      window.history.replaceState(null, '', '/chat');
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -62,12 +75,17 @@ export function ChatWindow() {
 
   const disabled = status === 'submitted' || status === 'streaming';
 
+  // A query handed off from the landing hero is about to become the first
+  // message — render nothing rather than flash the (redundant) chat-page
+  // Hero for the one tick before that send lands.
+  if (messages.length === 0 && pendingFromQuery) {
+    return <div className="min-h-0 flex-1" />;
+  }
+
   if (messages.length === 0) {
     return (
       <div className="min-h-0 flex-1 overflow-y-auto">
         <Hero onSend={(text) => sendMessage({ text })} />
-        <ProblemsSection />
-        <AboutPanel />
       </div>
     );
   }

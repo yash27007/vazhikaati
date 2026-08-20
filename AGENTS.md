@@ -85,17 +85,23 @@ IST (Asia/Kolkata) at the source, not UTC.
 actually returned, replies in whatever language the user wrote in, and
 never softens a risky connection.
 
-**The chat UI** (`src/app/chat/`, `src/app/api/`, `src/components/chat/`):
-a `/chat` page (the app's root `/` redirects here) built on `@ai-sdk/react`'s
-`useChat`, streaming through `POST /api/chat`. Journey plans render as a
-structured card (leg-by-leg timeline, human-readable stop names/local
-times, a four-band confidence badge) alongside the assistant's narration,
-not narration alone. Voice input records via the browser's `MediaRecorder`,
-uploads to `POST /api/transcribe`, and is transcribed via OpenAI's
-transcription API with language auto-detection (Tamil/Hindi/Telugu/English,
-or an explicit override) — the transcript fills the text box for the user
-to review before sending, not auto-sent. Chat history persists in
-`localStorage` only; nothing is persisted server-side.
+**The chat UI** (`src/app/`, `src/app/chat/`, `src/app/api/`,
+`src/components/chat/`): a dark, forced (no light theme) landing page at
+`/` — a hero with its own composer, a problems/solutions section stating
+what's broken about intercity bus travel today and how the GTFS ledger +
+engine fixes each one, and the corridor/data-honesty manifest — hands off
+a query typed there as `/chat?q=<query>`; `/chat` consumes and clears that
+param, sending it as the conversation's first message. `/chat` itself is
+built on `@ai-sdk/react`'s `useChat`, streaming through `POST /api/chat`.
+Journey plans render as a structured card (leg-by-leg timeline,
+human-readable stop names/local times, a four-band confidence badge)
+alongside the assistant's narration, not narration alone. Voice input
+records via the browser's `MediaRecorder`, uploads to `POST
+/api/transcribe`, and is transcribed via OpenAI's transcription API with
+language auto-detection (Tamil/Hindi/Telugu/English, or an explicit
+override) — the transcript fills the text box for the user to review
+before sending, not auto-sent. Chat history persists in `localStorage`
+only; nothing is persisted server-side.
 
 **Running without an OpenAI key:** set `MOCK_LLM=true` (already the default
 in this repo's `.env`). Both `/api/chat` and `/api/transcribe` swap in
@@ -104,8 +110,8 @@ scripted responses in that mode — `/api/chat`'s mock still calls the real
 query, so the whole UI is exercisable end to end with no API key and no
 cost. Seed the database with `bun run ingest` (real SETC CSV + demo
 corridor) and `bun run ingest:gtfs` (generates and ingests the mock GTFS
-network) before running. `bun run dev`, then open `/chat` (or `/`, which
-redirects there) and ask about a journey — e.g. Ooty to Srivilliputhur.
+network) before running. `bun run dev`, then open `/` and ask about a
+journey — e.g. Ooty to Srivilliputhur.
 
 **Testing:** `bun test` (needs local Postgres — see `.env.example`),
 `bun run lint`, `bunx tsc --noEmit` / `bun run typecheck`, `bun run build`.
